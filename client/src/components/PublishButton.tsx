@@ -41,8 +41,10 @@ export default function PublishButton() {
 
       setPublishedUrl(data.repoUrl);
       toast({
-        title: 'Published successfully!',
-        description: `Repository created at ${data.repoName}`,
+        title: data.updated ? 'Updated successfully!' : 'Published successfully!',
+        description: data.updated 
+          ? `Repository updated at ${data.repoName}`
+          : `Repository created at ${data.repoName}`,
       });
     } catch (error: any) {
       toast({

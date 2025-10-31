@@ -20,16 +20,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await octokit.rest.users.getAuthenticated();
       const username = user.data.login;
 
-      const repo = await octokit.rest.repos.createForAuthenticatedUser({
-        name: repoName,
-        description: description || "BiriGashi Investment Tracker - Property investment dashboard",
-        private: isPrivate ?? false,
-        auto_init: false,
-      });
+      let repo;
+      let repoExists = false;
+
+      try {
+        const existingRepo = await octokit.rest.repos.get({
+          owner: username,
+          repo: repoName,
+        });
+        repo = existingRepo.data;
+        repoExists = true;
+      } catch (error: any) {
+        if (error.status === 404) {
+          repo = await octokit.rest.repos.createForAuthenticatedUser({
+            name: repoName,
+            description: description || "BiriGashi Investment Tracker - Property investment dashboard",
+            private: isPrivate ?? false,
+            auto_init: false,
+          }).then(r => r.data);
+        } else {
+          throw error;
+        }
+      }
 
       await execAsync('git init');
       await execAsync('git add .');
-      await execAsync('git commit -m "Initial commit: BiriGashi Investment Tracker" || true');
+      await execAsync('git commit -m "Update: BiriGashi Investment Tracker" || true');
       await execAsync(`git branch -M main`);
       await execAsync(`git remote add origin https://github.com/${username}/${repoName}.git || git remote set-url origin https://github.com/${username}/${repoName}.git`);
       
@@ -38,8 +54,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         success: true,
-        repoUrl: repo.data.html_url,
-        repoName: repo.data.full_name,
+        repoUrl: repo.html_url,
+        repoName: repo.full_name,
+        updated: repoExists,
       });
     } catch (error: any) {
       console.error("GitHub publish error:", error);
