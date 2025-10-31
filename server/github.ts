@@ -40,3 +40,5 @@ export async function getUncachableGitHubClient() {
   const accessToken = await getAccessToken();
   return new Octokit({ auth: accessToken });
 }
+
+export { getAccessToken };

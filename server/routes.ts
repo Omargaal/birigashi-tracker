@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { getUncachableGitHubClient } from "./github";
+import { getUncachableGitHubClient, getAccessToken } from "./github";
 import { exec } from "child_process";
 import { promisify } from "util";
 
@@ -49,7 +49,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await execAsync(`git branch -M main`);
       await execAsync(`git remote add origin https://github.com/${username}/${repoName}.git || git remote set-url origin https://github.com/${username}/${repoName}.git`);
       
-      const accessToken = await getUncachableGitHubClient().then(client => (client as any).auth);
+      const accessToken = await getAccessToken();
       await execAsync(`git push -u https://${accessToken}@github.com/${username}/${repoName}.git main --force`);
 
       res.json({
